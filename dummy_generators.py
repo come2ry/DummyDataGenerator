@@ -361,7 +361,8 @@ class DummyJobPost(DummyAddress):
             'PV': self._pv,
             '特徴': self._tags,
             '職種ID': self._job_type_id,
-            '仕事内容s': self._job_contents,
+            '仕事内容': self._job_content,
+            '身につくスキルs': self._acquireble_skills,
             '募集テキスト': self._post_content_text,
             '仕事イメージ画像': self._job_image_url,
             'タイトル': self._title,
@@ -448,7 +449,10 @@ class DummyJobPost(DummyAddress):
     def _job_type_id(self) -> int:
         return int(random.choice(list(self.master_job_types.keys())))
 
-    def _job_contents(self) -> str:
+    def _job_content(self) -> str:
+        return f.words(random.randint(1, 3))
+
+    def _acquireble_skills(self) -> str:
         return ",".join(f.words(random.randint(1, 10)))
 
     def _post_content_text(self) -> str:
