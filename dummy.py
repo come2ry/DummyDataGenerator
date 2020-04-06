@@ -1,4 +1,5 @@
 import csv
+import sys
 import random
 from collections import deque
 from typing import List, Dict, Deque, Any, Optional
@@ -17,10 +18,10 @@ class Dummy(object):
     def __init__(self, n: int) -> None:
         self.n: int = n
         self.itr_index: int = 0
-        self.dummy_user_creater: 'DummyUser' = DummyUser(n)
-        self.dummy_company_creater: 'DummyCompany' = DummyCompany(n)
-        self.dummy_address_creater: 'DummyAddress' = DummyAddress(n)
-        self.dummy_job_post_creater: 'DummyJobPost' = DummyJobPost(n)
+        self.dummy_user_creater: 'DummyUser' = DummyUser()
+        self.dummy_company_creater: 'DummyCompany' = DummyCompany()
+        self.dummy_address_creater: 'DummyAddress' = DummyAddress()
+        self.dummy_job_post_creater: 'DummyJobPost' = DummyJobPost()
         self.address_queue: Deque[dict] = deque([])
         self.headers: Dict[str, List[str]] = {
             'user': list(self.dummy_user_creater.router.keys()),
@@ -67,6 +68,14 @@ class Dummy(object):
 
         return header
 
+    def get_indexs(self) -> Dict[str, int]:
+        return {
+            'user': self.dummy_user_creater._id(),
+            'address': self.dummy_address_creater._id(),
+            'company': self.dummy_company_creater._id(),
+            'job_post': self.dummy_job_post_creater._id()
+        }
+
 if __name__ == '__main__':
     def main(n: int) -> None:
         with \
@@ -87,7 +96,7 @@ if __name__ == '__main__':
             j_writer.writerow(dummy_creater.get_header('job_post'))
 
             for i, dummy_rows in enumerate(dummy_creater):
-                print(f"{i}: ", end="")
+                # print(f"{i}: ", end="")
 
                 for key, value in dummy_rows.items():
                     if key == 'user':
@@ -99,9 +108,12 @@ if __name__ == '__main__':
                     elif key == 'job_post':
                         j_writer.writerow(list(value.values()))
 
-                print("done!")
+                sys.stdout.write("\rNow count is... %d" % i)
+                sys.stdout.flush()
 
-            print(f"{n}: finished!")
+            results: Dict[str, int] = dummy_creater.get_indexs()
+            print("\nCreated lines: ", end="")
+            print(results)
 
     while 1:
         try:

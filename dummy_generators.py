@@ -16,12 +16,13 @@ f = Factory.create('ja_JP')
 kakasi = kakasi()
 kakasi.setMode('J', 'H')  # J(Kanji) to H(Hiragana)
 conv = kakasi.getConverter()
+MAX_ITR_N = 10**10
 
 
 class DummyTemplate(object):
-    def __init__(self, n: int) -> None:
+    def __init__(self, n: Optional[int] = None) -> None:
         self.itr_index: int = 0
-        self.n: int = n
+        self.n: int = MAX_ITR_N if n is None else n
         self.creator: Optional[CreatorType] = None
         self.router: Dict[str, CreatorType] = {}
 
@@ -48,7 +49,17 @@ class DummyTemplate(object):
         return self
 
     def __next__(self) -> RowDictType:
-        return {}
+        if self.itr_index == self.n:
+            raise StopIteration()
+
+        self.itr_index += 1
+        self._set_init()
+        dummy_row: RowDictType = dict([(key, creator())
+                                       for key, creator in self.router.items()])
+        return dummy_row
+
+    def _set_init(self) -> None:
+        pass
 
     def get_header(self) -> List[str]:
         return list(self.router.keys())
@@ -56,7 +67,7 @@ class DummyTemplate(object):
 
 class DummyUser(DummyTemplate):
 
-    def __init__(self, n: int) -> None:
+    def __init__(self, n: Optional[int] = None) -> None:
         super().__init__(n)
         self.router: Dict[str, CreatorType] = {
             'ID': self._id,
@@ -86,20 +97,9 @@ class DummyUser(DummyTemplate):
         self.itr_name2: str = ""
         self.itr_school_type_id: int = -1
 
-    def __iter__(self) -> 'DummyUser':
-        return self
 
-    def __next__(self) -> RowDictType:
-        if self.itr_index == self.n:
-            raise StopIteration()
-
-        self.itr_index += 1
-        self.set_init(f.name())
-        dummy_row: RowDictType = dict([(key, creator())
-                                       for key, creator in self.router.items()])
-        return dummy_row
-
-    def set_init(self, name: Optional[str] = None) -> None:
+    def _set_init(self) -> None:
+        name = f.name()
         self.itr_name = cast(str, name)
         self.itr_name2 = conv.do(self.itr_name)
         self.itr_school_type_id = int(random.choices(
@@ -183,7 +183,7 @@ class DummyUser(DummyTemplate):
 
 class DummyAddress(DummyTemplate):
 
-    def __init__(self, n: int) -> None:
+    def __init__(self, n: Optional[int] = None) -> None:
         super().__init__(n)
         self.router: Dict[str, CreatorType] = {
             'ID': self._id,
@@ -204,20 +204,7 @@ class DummyAddress(DummyTemplate):
         self.itr_address_type_id: int = 0
         self.itr_address_list: List[Any] = []
 
-    def __iter__(self) -> 'DummyAddress':
-        return self
-
-    def __next__(self) -> RowDictType:
-        if self.itr_index == self.n:
-            raise StopIteration()
-
-        self.itr_index += 1
-        self.set_init()
-        dummy_row: RowDictType = dict([(key, creator())
-                                       for key, creator in self.router.items()])
-        return dummy_row
-
-    def set_init(self) -> None:
+    def _set_init(self) -> None:
         self.itr_address_list = [f.prefecture(), f.city(
         ), f.town(), f.chome()+f.ban(), f.building_name()+f.gou()]
         self.itr_address_type_id = int(random.choices(
@@ -277,7 +264,7 @@ class DummyAddress(DummyTemplate):
 
 class DummyCompany(DummyAddress):
 
-    def __init__(self, n: int) -> None:
+    def __init__(self, n: Optional[int] = None) -> None:
         super().__init__(n)
         self.router: Dict[str, CreatorType] = {
             'ID': self._id,
@@ -292,22 +279,6 @@ class DummyCompany(DummyAddress):
             '資本金': self._capital,
             '設立年': self._established
         }
-
-    def __iter__(self) -> 'DummyCompany':
-        return self
-
-    def __next__(self) -> RowDictType:
-        if self.itr_index == self.n:
-            raise StopIteration()
-
-        self.itr_index += 1
-        self.set_init()
-        dummy_row: RowDictType = dict([(key, creator())
-                                       for key, creator in self.router.items()])
-        return dummy_row
-
-    def set_init(self) -> None:
-        super().set_init()
 
     def _id(self) -> int:
         return self.itr_index
@@ -356,7 +327,7 @@ class DummyCompany(DummyAddress):
 
 class DummyJobPost(DummyAddress):
 
-    def __init__(self, n: int) -> None:
+    def __init__(self, n: Optional[int] = None) -> None:
         super().__init__(n)
         self.router: Dict[str, CreatorType] = {
             'ID': self._id,
@@ -369,6 +340,7 @@ class DummyJobPost(DummyAddress):
             '身につくスキルs': self._acquireble_skills,
             '募集テキスト': self._post_content_text,
             '仕事イメージ画像': self._job_image_url,
+            '要件': self._requirement_text,
             'タイトル': self._title,
             'サブタイトル': self._subtitle,
             '交通費支給': self._traffic_allowance,
@@ -385,9 +357,6 @@ class DummyJobPost(DummyAddress):
         self.itr_salary: Union[Tuple[str, str, int],
                                Tuple[str, str, int, int], None] = None
 
-    def __iter__(self) -> 'DummyJobPost':
-        return self
-
     def __next__(self) -> RowDictType:
         if self.itr_index == self.n:
             raise StopIteration()
@@ -398,7 +367,7 @@ class DummyJobPost(DummyAddress):
         return dummy_row
 
     def set_init(self, address_row: Optional[RowDictType] = None) -> None:
-        super().set_init()
+        super()._set_init()
         self.itr_houry_wage = (random.randint(1000, 3249)//250)*250
         self.itr_work_hours = random.randint(3, 10)
         self.itr_work_days = random.randint(1, 5)
@@ -417,7 +386,7 @@ class DummyJobPost(DummyAddress):
             self.itr_salary = ("月給", random.choice(
                 ["<", "=", ">"]), self.itr_monthly_salary)
         else:
-            self.itr_salary = ("月給", "〜", self.itr_houry_wage, self.itr_monthly_salary +
+            self.itr_salary = ("月給", "〜", self.itr_monthly_salary, self.itr_monthly_salary +
                                random.choice([5000, 10000, 15000, 20000, 25000, 30000, 35000, 40000]))
 
         if address_row is None:
@@ -454,7 +423,7 @@ class DummyJobPost(DummyAddress):
         return int(random.choice(list(self.master_job_types.keys())))
 
     def _job_content(self) -> str:
-        return f.words(random.randint(1, 3))
+        return ",".join(f.words(random.randint(1, 3)))
 
     def _acquireble_skills(self) -> str:
         return ",".join(f.words(random.randint(1, 10)))
@@ -475,7 +444,10 @@ class DummyJobPost(DummyAddress):
         return cast(int, self.itr_address.get("ID", -1))
 
     def _job_image_url(self) -> str:
-        return cast(str, self.dummy_profile_image_url)
+        return self.dummy_profile_image_url
+
+    def _requirement_text(self) -> str:
+        return "・"+"\\n・".join(f.text(random.randint(200, 400)).splitlines())
 
     def _title(self) -> str:
         return "\\n".join(f.text(random.randint(50, 100)).splitlines())
@@ -509,3 +481,55 @@ class DummyJobPost(DummyAddress):
 
     def _pv(self) -> int:
         return random.randint(0, 1000)
+
+
+class DummyJobApply(DummyTemplate):
+
+    def __init__(self, n: Optional[int] = None) -> None:
+        super().__init__(n)
+        self.router: Dict[str, CreatorType] = {
+            'ID': self._id,
+            '参加ステータスID': self._apply_status_id,
+            '投稿ID': self._post_id,
+            'ユーザーID': self._user_id,
+            '勤務日数': self._work_days,
+            '勤務時間数': self._work_hours,
+            '志望動機': self._motivation,
+            '備考': self.remark
+        }
+
+    def set_init(self, address_row: Optional[RowDictType] = None) -> None:
+        super().set_init()
+        self.itr_houry_wage = (random.randint(1000, 3249)//250)*250
+        self.itr_work_hours = random.randint(3, 10)
+        self.itr_work_days = random.randint(1, 5)
+        self.itr_monthly_salary = self.itr_houry_wage * \
+            self.itr_work_hours*self.itr_work_days
+        self.itr_address_id = 1
+
+        r: int = random.randint(1, 4)
+        if r == 1:
+            self.itr_salary = ("時給", random.choice(
+                ["<", "=", ">"]), self.itr_houry_wage)
+        elif r == 2:
+            self.itr_salary = ("時給", "〜", self.itr_houry_wage, self.itr_houry_wage +
+                               random.choice([500, 1000, 1500, 2000, 2500, 3000]))
+        elif r == 3:
+            self.itr_salary = ("月給", random.choice(
+                ["<", "=", ">"]), self.itr_monthly_salary)
+        else:
+            self.itr_salary = ("月給", "〜", self.itr_houry_wage, self.itr_monthly_salary +
+                               random.choice([5000, 10000, 15000, 20000, 25000, 30000, 35000, 40000]))
+
+        if address_row is None:
+            raise TypeError(
+                "set_init() missing required argument 'addres_row' (pos 1)")
+            exit(0)
+
+        self.set_address(cast(RowDictType, address_row))
+
+    def set_address(self, address_row: RowDictType) -> None:
+        self.itr_address = address_row
+
+    def _id(self) -> int:
+        return self.itr_index
