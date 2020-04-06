@@ -66,6 +66,7 @@ class DummyUser(DummyTemplate):
             'メイ': self._first_name2,
             'メールアドレス': self._mail,
             '電話番号': self._tel,
+            '出身高校名': self._hight_school,
             '大学名': self._school,
             '学部': self._faculty,
             '学科': self._department,
@@ -134,6 +135,9 @@ class DummyUser(DummyTemplate):
 
     def _tel(self) -> str:
         return "060" + ''.join(map(str, random.choices(range(10), k=8)))
+
+    def _hight_school(self) -> str:
+        return f.town()+"高校"
 
     def _school(self) -> str:
         # return random.choice(self.master_schools)
