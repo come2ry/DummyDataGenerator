@@ -1,0 +1,5 @@
+example_csv/
+__pycache__/
+.mypy_cache/
+.vscode/
+_.py

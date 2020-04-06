@@ -541,3 +541,45 @@ class DummyJobApply(DummyTemplate):
 
     def _remark(self) -> str:
         return "\\n".join(f.text(random.randint(100, 400)).splitlines())
+
+
+class DummyJobFav(DummyTemplate):
+
+    def __init__(self, n: Optional[int] = None) -> None:
+        super().__init__(n)
+        self.router: Dict[str, CreatorType] = {
+            '投稿ID': self._post_id,
+            'ユーザーID': self._user_id
+        }
+
+        self.itr_user_id: Optional[int] = None
+        self.itr_post_id: Optional[int] = None
+
+        self.will__set_init: bool = False
+
+    def set_init(self, user_id: Optional[int] = None, post_id: Optional[int] = None) -> None:
+        super()._set_init()
+
+        if user_id is None or post_id is None:
+            errors = []
+            if user_id is None:
+                errors += ["'user_id'"]
+            if post_id is None:
+                errors += ["'post_id'"]
+            error_message = ", ".join(errors)
+
+            raise TypeError(
+                f"set_init() missing required argument {error_message}")
+            exit(0)
+
+        self.itr_user_id = user_id
+        self.itr_post_id = post_id
+
+    def _id(self) -> int:
+        return self.itr_index
+
+    def _post_id(self) -> int:
+        return cast(int, self.itr_post_id)
+
+    def _user_id(self) -> int:
+        return cast(int, self.itr_user_id)
