@@ -7,7 +7,8 @@ from dummy_generators import (
     DummyUser,
     DummyCompany,
     DummyAddress,
-    DummyJobPost
+    DummyJobPost,
+    DummyJobApply
 )
 from dummy_types import (
     RowDictType
@@ -22,12 +23,15 @@ class Dummy(object):
         self.dummy_company_creater: 'DummyCompany' = DummyCompany()
         self.dummy_address_creater: 'DummyAddress' = DummyAddress()
         self.dummy_job_post_creater: 'DummyJobPost' = DummyJobPost()
+        self.dummy_job_apply_creater: 'DummyJobApply' = DummyJobApply()
         self.address_queue: Deque[dict] = deque([])
+        self.user_queue: Deque[int] = deque([])
         self.headers: Dict[str, List[str]] = {
             'user': list(self.dummy_user_creater.router.keys()),
             'address': list(self.dummy_address_creater.router.keys()),
             'company': list(self.dummy_company_creater.router.keys()),
-            'job_post': list(self.dummy_job_post_creater.router.keys())
+            'job_post': list(self.dummy_job_post_creater.router.keys()),
+            'job_apply': list(self.dummy_job_apply_creater.router.keys())
         }
 
 
@@ -47,6 +51,9 @@ class Dummy(object):
         if self.itr_index > 500:
             self.address_queue.popleft()
         self.address_queue.append(dummy_address_row)
+        if self.itr_index > 500:
+            self.user_queue.popleft()
+        self.user_queue.append(dummy_user_row.get('ID'))
 
         if self.itr_index == 1 or dummy_address_row.get('住所タイプID') == 1:
             dummy_company_row: RowDictType = next(self.dummy_company_creater)
@@ -56,6 +63,10 @@ class Dummy(object):
             self.dummy_job_post_creater.set_init(random.choice(self.address_queue))
             dummy_job_post_row: RowDictType = next(self.dummy_job_post_creater)
             row['job_post'] = dummy_job_post_row
+
+            self.dummy_job_apply_creater.set_init(user_id=random.choice(self.user_queue), post_id=dummy_job_post_row.get('ID'))
+            dummy_job_apply_row: RowDictType = next(self.dummy_job_apply_creater)
+            row['job_apply'] = dummy_job_apply_row
 
         return row
 
@@ -73,7 +84,8 @@ class Dummy(object):
             'user': self.dummy_user_creater._id(),
             'address': self.dummy_address_creater._id(),
             'company': self.dummy_company_creater._id(),
-            'job_post': self.dummy_job_post_creater._id()
+            'job_post': self.dummy_job_post_creater._id(),
+            'job_apply': self.dummy_job_apply_creater._id()
         }
 
 if __name__ == '__main__':
@@ -82,18 +94,21 @@ if __name__ == '__main__':
             open('example_csv/dummy_user.csv', 'w', encoding='utf-8') as u_fp, \
             open('example_csv/dummy_address.csv', 'w', encoding='utf-8') as a_fp, \
             open('example_csv/dummy_company.csv', 'w', encoding='utf-8') as c_fp, \
-            open('example_csv/dummy_job_post.csv', 'w', encoding='utf-8') as j_fp:
+            open('example_csv/dummy_job_post.csv', 'w', encoding='utf-8') as jp_fp, \
+            open('example_csv/dummy_job_apply.csv', 'w', encoding='utf-8') as ja_fp:
 
             u_writer = csv.writer(u_fp)
             a_writer = csv.writer(a_fp)
             c_writer = csv.writer(c_fp)
-            j_writer = csv.writer(j_fp)
+            jp_writer = csv.writer(jp_fp)
+            ja_writer = csv.writer(ja_fp)
 
             dummy_creater: Dummy = Dummy(n)
             u_writer.writerow(dummy_creater.get_header('user'))
             a_writer.writerow(dummy_creater.get_header('address'))
             c_writer.writerow(dummy_creater.get_header('company'))
-            j_writer.writerow(dummy_creater.get_header('job_post'))
+            jp_writer.writerow(dummy_creater.get_header('job_post'))
+            ja_writer.writerow(dummy_creater.get_header('job_apply'))
 
             for i, dummy_rows in enumerate(dummy_creater):
                 # print(f"{i}: ", end="")
@@ -106,7 +121,9 @@ if __name__ == '__main__':
                     elif key == 'company':
                         c_writer.writerow(list(value.values()))
                     elif key == 'job_post':
-                        j_writer.writerow(list(value.values()))
+                        jp_writer.writerow(list(value.values()))
+                    elif key == 'job_apply':
+                        ja_writer.writerow(list(value.values()))
 
                 sys.stdout.write("\rNow count is... %d" % i)
                 sys.stdout.flush()

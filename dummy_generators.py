@@ -38,12 +38,15 @@ class DummyTemplate(object):
         self.master_company_statuses: Dict[str, str] = M.get("COMPANY_STATUSES")
         self.master_area_types: Dict[str, str] = M.get("AREA_TYPES")
         self.master_traffic_allowances: List[str] = M.get("TRAFFIC_ALLOWANCES")
+        self.master_apply_statuses: Dict[str, str] = M.get("APPLY_STATUSES")
 
         self.dummy_profile_image_url: str = M.get("PROFILE_IMAGE_URL")
         self.dummy_company_url: str = M.get("COMPANY_URL")
 
         # 動的Matser
         self.master_tags: List[str] = f.words(30)
+
+        self.will__set_init: bool = True
 
     def __iter__(self):
         return self
@@ -53,7 +56,8 @@ class DummyTemplate(object):
             raise StopIteration()
 
         self.itr_index += 1
-        self._set_init()
+        if self.will__set_init:
+            self._set_init()
         dummy_row: RowDictType = dict([(key, creator())
                                        for key, creator in self.router.items()])
         return dummy_row
@@ -357,14 +361,7 @@ class DummyJobPost(DummyAddress):
         self.itr_salary: Union[Tuple[str, str, int],
                                Tuple[str, str, int, int], None] = None
 
-    def __next__(self) -> RowDictType:
-        if self.itr_index == self.n:
-            raise StopIteration()
-
-        self.itr_index += 1
-        dummy_row: RowDictType = dict([(key, creator())
-                                       for key, creator in self.router.items()])
-        return dummy_row
+        self.will__set_init: bool = False
 
     def set_init(self, address_row: Optional[RowDictType] = None) -> None:
         super()._set_init()
@@ -495,41 +492,52 @@ class DummyJobApply(DummyTemplate):
             '勤務日数': self._work_days,
             '勤務時間数': self._work_hours,
             '志望動機': self._motivation,
-            '備考': self.remark
+            '備考': self._remark
         }
 
-    def set_init(self, address_row: Optional[RowDictType] = None) -> None:
-        super().set_init()
-        self.itr_houry_wage = (random.randint(1000, 3249)//250)*250
-        self.itr_work_hours = random.randint(3, 10)
-        self.itr_work_days = random.randint(1, 5)
-        self.itr_monthly_salary = self.itr_houry_wage * \
-            self.itr_work_hours*self.itr_work_days
-        self.itr_address_id = 1
+        self.itr_user_id: Optional[int] = None
+        self.itr_post_id: Optional[int] = None
 
-        r: int = random.randint(1, 4)
-        if r == 1:
-            self.itr_salary = ("時給", random.choice(
-                ["<", "=", ">"]), self.itr_houry_wage)
-        elif r == 2:
-            self.itr_salary = ("時給", "〜", self.itr_houry_wage, self.itr_houry_wage +
-                               random.choice([500, 1000, 1500, 2000, 2500, 3000]))
-        elif r == 3:
-            self.itr_salary = ("月給", random.choice(
-                ["<", "=", ">"]), self.itr_monthly_salary)
-        else:
-            self.itr_salary = ("月給", "〜", self.itr_houry_wage, self.itr_monthly_salary +
-                               random.choice([5000, 10000, 15000, 20000, 25000, 30000, 35000, 40000]))
+        self.will__set_init: bool = False
 
-        if address_row is None:
+    def set_init(self, user_id: Optional[int] = None, post_id: Optional[int] = None) -> None:
+        super()._set_init()
+
+        if user_id is None or post_id is None:
+            errors = []
+            if user_id is None:
+                errors += ["'user_id'"]
+            if post_id is None:
+                errors += ["'post_id'"]
+            error_message = ", ".join(errors)
+
             raise TypeError(
-                "set_init() missing required argument 'addres_row' (pos 1)")
+                f"set_init() missing required argument {error_message}")
             exit(0)
 
-        self.set_address(cast(RowDictType, address_row))
-
-    def set_address(self, address_row: RowDictType) -> None:
-        self.itr_address = address_row
+        self.itr_user_id = user_id
+        self.itr_post_id = post_id
 
     def _id(self) -> int:
         return self.itr_index
+
+    def _apply_status_id(self) -> int:
+        return int(random.choice(list(self.master_apply_statuses.keys())))
+
+    def _post_id(self) -> int:
+        return cast(int, self.itr_post_id)
+
+    def _user_id(self) -> int:
+        return cast(int, self.itr_user_id)
+
+    def _work_days(self) -> int:
+        return random.randint(3, 10)
+
+    def _work_hours(self) -> int:
+        return random.randint(1, 5)
+
+    def _motivation(self) -> str:
+        return "\\n".join(f.text(random.randint(100, 400)).splitlines())
+
+    def _remark(self) -> str:
+        return "\\n".join(f.text(random.randint(100, 400)).splitlines())
