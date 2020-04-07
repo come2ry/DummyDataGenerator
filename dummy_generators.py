@@ -1,6 +1,5 @@
 import json
 import random
-import pandas as pd  # type: ignore
 from typing import List, Dict, Tuple, Callable, Any, Union, Optional, TypeVar, cast, overload
 from mypy_extensions import TypedDict
 from faker import Factory  # type: ignore
@@ -8,7 +7,8 @@ from datetime import date
 from pykakasi import kakasi  # type: ignore
 from dummy_types import (
     CreatorType,
-    RowDictType
+    RowDictType,
+    RowType
 )
 from dummy_masters import Master as M
 
@@ -39,7 +39,7 @@ class DummyTemplate(object):
         self.master_area_types: Dict[str, str] = M.get("AREA_TYPES")
         self.master_traffic_allowances: List[str] = M.get("TRAFFIC_ALLOWANCES")
         self.master_apply_statuses: Dict[str, str] = M.get("APPLY_STATUSES")
-        self.master_tags: List[str] = f.words(30)
+        self.master_tags: Dict[str, str] = M.get("TAGS")
 
         self.dummy_profile_image_url: str = M.get("PROFILE_IMAGE_URL")
         self.dummy_company_url: str = M.get("COMPANY_URL")
@@ -61,9 +61,6 @@ class DummyTemplate(object):
             self._set_init()
         dummy_row: RowDictType = dict([(key, creator()) for key, creator in self.router.items()])
         return dummy_row
-
-    def _set_init(self) -> None:
-        pass
 
     def get_header(self) -> List[str]:
         return list(self.router.keys())
@@ -90,7 +87,6 @@ class DummyUser(DummyTemplate):
             'furi_1': self._furi_1,
             'furi_2': self._furi_2,
             'birthday': self._birthday,
-            'password': self._password,
             'pr': self._pr,
             'future': self._future,
         }
@@ -110,18 +106,21 @@ class DummyUser(DummyTemplate):
                 "大学": 70,
                 "高等専門学校": 9,
                 "短期大学": 2,
-                "美術大学": 1,
                 "大学大学院": 15,
                 "専門学校": 4
             }.values()),
             k=1
         )[0])
 
-    def _at(self) -> Dict[str, Callable[..., List[Dict[str, int]]]]:
+    def _at(self) -> Dict[str, List[Dict[str, int]]]:
         return {
+            'password': self._at_password(),
             'user_business_domain_ids': self._at_business_domain_ids(),
-            'user_job_type_id': self._at_job_type_ids(),
+            'user_job_type_ids': self._at_job_type_ids(),
         }
+
+    def _at_password(self) -> Dict[str, Union[str, int]]:
+        return {"user_id": self._id(), "password": "password"}
 
     def _at_business_domain_ids(self) -> List[Dict[str, int]]:
         k = random.randint(1, 3)
@@ -130,8 +129,8 @@ class DummyUser(DummyTemplate):
 
     def _at_job_type_ids(self) -> List[Dict[str, int]]:
         k = random.randint(1, 3)
-        job_type_ids = random.sample(list(self.master_job_types.values()), k=k)
-        return [{'user_id': self._id(), 'job_type_id_id': int(b)} for b in job_type_ids]
+        job_type_ids = random.sample(list(self.master_job_types.keys()), k=k)
+        return [{'user_id': self._id(), 'job_type_id': int(b)} for b in job_type_ids]
 
     def _id(self) -> int:
         return self.itr_index
@@ -175,7 +174,8 @@ class DummyUser(DummyTemplate):
 
     def _birthday(self) -> date:
         # pattern="%Y-%m-%d %H:%M:%S"
-        return f.date_between(start_date=date(year=1995, month=1, day=1), end_date=date(year=2002, month=1, day=1))
+        # return f.date_between(start_date=date(year=1995, month=1, day=1), end_date=date(year=2002, month=1, day=1))
+        return date.today()
 
     def _sex_id(self) -> int:
         return int(random.choice(list(self.master_sexs.keys())))
@@ -189,8 +189,6 @@ class DummyUser(DummyTemplate):
     def _future(self) -> str:
         return "\\n".join(f.text(random.randint(5, 400)).splitlines()) if random.randint(0, 10) != 0 else ""
 
-    def _password(self) -> str:
-        return "password"
 
 
 class DummyAddress(DummyTemplate):
@@ -211,8 +209,8 @@ class DummyAddress(DummyTemplate):
             'address_3': self._address_3,
             'address_4': self._address_4
         }
-        self.company_num: int = 0
-        self.itr_address_type_id: int = 0
+        self.company_num: int = 1
+        self.itr_address_type_id: int = -1
         self.itr_address_list: List[Any] = []
 
     def _set_init(self) -> None:
@@ -231,7 +229,7 @@ class DummyAddress(DummyTemplate):
         if self.itr_address_type_id == 0:
             self.company_num += 1
 
-    def _at(self) -> Dict[str, Callable[..., Dict[str, str]]]:
+    def _at(self) ->  Dict[str, RowType]:
         return {
             'area': self._at_area(),
         }
@@ -286,7 +284,7 @@ class DummyCompany(DummyAddress):
         self.router: Dict[str, CreatorType] = {
             '@': self._at,
             'id': self._id,
-            'acoount_status_id': self._company_account_status_id,
+            'account_status_id': self._company_account_status_id,
             'company_name': self._company,
             'profile_image_url': self._profile_image_url,
             'company_url': self._company_url,
@@ -296,10 +294,10 @@ class DummyCompany(DummyAddress):
             'established_at': self._established
         }
 
-    def _at(self) -> Dict[str, Callable[..., Dict[str, str]]]:
+    def _at(self) -> Dict[str, RowType]:
         return {
             'description': self._at_description(),
-            'company_business_domains': self._at_company_business_domains(),
+            'company_business_domain_ids': self._at_company_business_domain_ids(),
         }
 
     def _at_description(self) -> Dict[str, str]:
@@ -416,7 +414,7 @@ class DummyJobPost(DummyAddress):
     def set_address(self, address_row: RowDictType) -> None:
         self.itr_address = address_row
 
-    def _at(self) -> Dict[str, Callable[..., Dict[str, str]]]:
+    def _at(self) ->  Dict[str, RowType]:
         return {
             'pv': self._at_pv(),
             'tags': self._at_tags(),
@@ -509,7 +507,7 @@ class DummyJobApply(DummyTemplate):
     def __init__(self, n: Optional[int] = None) -> None:
         super().__init__(n)
         self.router: Dict[str, CreatorType] = {
-            '@': self._at,
+            '@': lambda: dict(),
             'id': self._id,
             'status_id': self._apply_status_id,
             'post_id': self._post_id,
@@ -526,8 +524,6 @@ class DummyJobApply(DummyTemplate):
         self.will__set_init: bool = False
 
     def set_init(self, user_id: Optional[int] = None, post_id: Optional[int] = None) -> None:
-        super()._set_init()
-
         if user_id is None or post_id is None:
             errors = []
             if user_id is None:
@@ -542,9 +538,6 @@ class DummyJobApply(DummyTemplate):
 
         self.itr_user_id = user_id
         self.itr_post_id = post_id
-
-    def _at(self) -> None:
-        return None
 
     def _id(self) -> int:
         return self.itr_index
@@ -576,8 +569,9 @@ class DummyJobFav(DummyTemplate):
     def __init__(self, n: Optional[int] = None) -> None:
         super().__init__(n)
         self.router: Dict[str, CreatorType] = {
-            '投稿ID': self._post_id,
-            'ユーザーID': self._user_id
+            '@': lambda: dict(),
+            'post_id': self._post_id,
+            'user_id': self._user_id
         }
 
         self.itr_user_id: Optional[int] = None
@@ -586,8 +580,6 @@ class DummyJobFav(DummyTemplate):
         self.will__set_init: bool = False
 
     def set_init(self, user_id: Optional[int] = None, post_id: Optional[int] = None) -> None:
-        super()._set_init()
-
         if user_id is None or post_id is None:
             errors = []
             if user_id is None:

@@ -56,9 +56,9 @@ class Dummy(object):
         self.address_queue.append(dummy_address_row)
         if self.itr_index > 500:
             self.user_queue.popleft()
-        self.user_queue.append(cast(int, dummy_user_row.get('ID')))
+        self.user_queue.append(cast(int, dummy_user_row.get('id')))
 
-        if self.itr_index == 1 or dummy_address_row.get('住所タイプID') == 1:
+        if self.itr_index == 1 or dummy_address_row.get('address_type_id') == 1:
             dummy_company_row: RowDictType = next(self.dummy_company_creater)
             row['company'] = dummy_company_row
 
@@ -67,11 +67,11 @@ class Dummy(object):
             dummy_job_post_row: RowDictType = next(self.dummy_job_post_creater)
             row['job_post'] = dummy_job_post_row
 
-            self.dummy_job_apply_creater.set_init(user_id=random.choice(self.user_queue), post_id=cast(int, dummy_job_post_row.get('ID')))
+            self.dummy_job_apply_creater.set_init(user_id=random.choice(self.user_queue), post_id=cast(int, dummy_job_post_row.get('id')))
             dummy_job_apply_row: RowDictType = next(self.dummy_job_apply_creater)
             row['job_apply'] = dummy_job_apply_row
 
-            self.dummy_job_fav_creater.set_init(user_id=random.choice(self.user_queue), post_id=cast(int, dummy_job_post_row.get('ID')))
+            self.dummy_job_fav_creater.set_init(user_id=random.choice(self.user_queue), post_id=cast(int, dummy_job_post_row.get('id')))
             dummy_job_fav_row: RowDictType = next(self.dummy_job_fav_creater)
             row['job_fav'] = dummy_job_fav_row
 
