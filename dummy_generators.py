@@ -511,13 +511,13 @@ class DummyJobApply(DummyTemplate):
         self.router: Dict[str, CreatorType] = {
             '@': self._at,
             'id': self._id,
-            '参加ステータスID': self._apply_status_id,
-            '投稿ID': self._post_id,
-            'ユーザーID': self._user_id,
-            '勤務日数': self._work_days,
-            '勤務時間数': self._work_hours,
-            '志望動機': self._motivation,
-            '備考': self._remark
+            'status_id': self._apply_status_id,
+            'post_id': self._post_id,
+            'user_id': self._user_id,
+            'work_days': self._work_days,
+            'work_hours': self._work_hours,
+            'motivation': self._motivation,
+            'remark': self._remark
         }
 
         self.itr_user_id: Optional[int] = None
@@ -542,6 +542,9 @@ class DummyJobApply(DummyTemplate):
 
         self.itr_user_id = user_id
         self.itr_post_id = post_id
+
+    def _at(self) -> None:
+        return None
 
     def _id(self) -> int:
         return self.itr_index
