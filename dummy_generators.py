@@ -39,12 +39,13 @@ class DummyTemplate(object):
         self.master_area_types: Dict[str, str] = M.get("AREA_TYPES")
         self.master_traffic_allowances: List[str] = M.get("TRAFFIC_ALLOWANCES")
         self.master_apply_statuses: Dict[str, str] = M.get("APPLY_STATUSES")
+        self.master_tags: List[str] = f.words(30)
 
         self.dummy_profile_image_url: str = M.get("PROFILE_IMAGE_URL")
         self.dummy_company_url: str = M.get("COMPANY_URL")
 
         # 動的Matser
-        self.master_tags: List[str] = f.words(30)
+        # self.master_tags: List[str] = f.words(30)
 
         self.will__set_init: bool = True
 
@@ -74,6 +75,7 @@ class DummyUser(DummyTemplate):
         super().__init__(n)
         self.router: Dict[str, CreatorType] = {
             '@': self._at,
+            'id': self._id,
             'department_category_id': self._department_category_id,
             'school_grade_id': self._school_grade_id,
             'email': self._mail,
@@ -117,9 +119,19 @@ class DummyUser(DummyTemplate):
 
     def _at(self) -> Dict[str, Callable[..., List[Dict[str, int]]]]:
         return {
-            'user_business_domain_ids': self._business_domain_ids(),
-            'user_job_type_id': self._job_type_ids(),
+            'user_business_domain_ids': self._at_business_domain_ids(),
+            'user_job_type_id': self._at_job_type_ids(),
         }
+
+    def _at_business_domain_ids(self) -> List[Dict[str, int]]:
+        k = random.randint(1, 3)
+        domain_ids = random.sample(list(self.master_business_domains.keys()), k=k)
+        return [{'user_id': self._id(), 'domain_id': int(b)} for b in domain_ids]
+
+    def _at_job_type_ids(self) -> List[Dict[str, int]]:
+        k = random.randint(1, 3)
+        job_type_ids = random.sample(list(self.master_job_types.values()), k=k)
+        return [{'user_id': self._id(), 'job_type_id_id': int(b)} for b in job_type_ids]
 
     def _id(self) -> int:
         return self.itr_index
@@ -171,16 +183,6 @@ class DummyUser(DummyTemplate):
     def _profile_image_url(self) -> str:
         return self.dummy_profile_image_url
 
-    def _business_domain_ids(self) -> List[Dict[str, int]]:
-        k = random.randint(1, 3)
-        business_domain_ids = random.sample(list(self.master_business_domains.keys()), k=k)
-        return [{'user_id': self._id(), 'business_domain_id': int(b)} for b in business_domain_ids]
-
-    def _job_type_ids(self) -> List[Dict[str, int]]:
-        k = random.randint(1, 3)
-        job_type_ids = random.sample(list(self.master_job_types.values()), k=k)
-        return [{'user_id': self._id(), 'job_type_id_id': int(b)} for b in job_type_ids]
-
     def _pr(self) -> str:
         return str(random.randint(0, 10000))
 
@@ -196,19 +198,18 @@ class DummyAddress(DummyTemplate):
     def __init__(self, n: Optional[int] = None) -> None:
         super().__init__(n)
         self.router: Dict[str, CreatorType] = {
-            'ID': self._id,
-            '会社ID': self._company_id,
-            '住所タイプID': self._address_type_id,
-            'エリアタイプ': self._area_type,
-            'タイトル': self._address_title,
-            'エリア': self._area,
-            'エリア備考': self._area_description,
-            'アクセス': self._access,
-            '郵便番号': self._zipcode,
-            '住所1': self._address_1,
-            '住所2': self._address_2,
-            '住所3': self._address_3,
-            '住所4': self._address_4
+            '@': self._at,
+            'id': self._id,
+            'company_id': self._company_id,
+            'address_type_id': self._address_type_id,
+            'area_id': self._area_type,
+            'title': self._address_title,
+            'access': self._access,
+            'zipcode': self._zipcode,
+            'address_1': self._address_1,
+            'address_2': self._address_2,
+            'address_3': self._address_3,
+            'address_4': self._address_4
         }
         self.company_num: int = 0
         self.itr_address_type_id: int = 0
@@ -230,6 +231,18 @@ class DummyAddress(DummyTemplate):
         if self.itr_address_type_id == 0:
             self.company_num += 1
 
+    def _at(self) -> Dict[str, Callable[..., Dict[str, str]]]:
+        return {
+            'area': self._at_area(),
+        }
+
+    def _at_area(self) -> Dict[str, str]:
+        return {
+            'area_type': "city",
+            'area': ','.join(self.itr_address_list[:2]),
+            'description': ""
+        }
+
     def _id(self) -> int:
         return self.itr_index
 
@@ -246,12 +259,6 @@ class DummyAddress(DummyTemplate):
         address_title = "" if self.itr_address_type_id != 1 else self.itr_address_list[0]
         address_title += self.master_address_types[str(self.itr_address_type_id)]
         return address_title
-
-    def _area(self) -> str:
-        return ','.join(self.itr_address_list[:2])
-
-    def _area_description(self) -> str:
-        return ""
 
     def _access(self) -> str:
         return f"{self.itr_address_list[2]}駅から徒歩{random.randint(1, 20)}分"
@@ -277,26 +284,38 @@ class DummyCompany(DummyAddress):
     def __init__(self, n: Optional[int] = None) -> None:
         super().__init__(n)
         self.router: Dict[str, CreatorType] = {
-            'ID': self._id,
-            '会社名': self._company,
-            '事業領域IDs': self._business_domain_ids,
-            'アカウントステータスID': self._company_status_id,
-            '説明': self._description,
-            'プロフィール画像': self._profile_image_url,
-            '会社URL': self._company_url,
-            '従業員数': self._employees,
-            '代表名': self._representative_name,
-            '資本金': self._capital,
-            '設立年': self._established
+            '@': self._at,
+            'id': self._id,
+            'acoount_status_id': self._company_account_status_id,
+            'company_name': self._company,
+            'profile_image_url': self._profile_image_url,
+            'company_url': self._company_url,
+            'employees': self._employees,
+            'representative_name': self._representative_name,
+            'capital': self._capital,
+            'established_at': self._established
         }
+
+    def _at(self) -> Dict[str, Callable[..., Dict[str, str]]]:
+        return {
+            'description': self._at_description(),
+            'company_business_domains': self._at_company_business_domains(),
+        }
+
+    def _at_description(self) -> Dict[str, str]:
+        return {
+            'description': "\\n".join(f.text(random.randint(400, 1000)).splitlines()) if random.randint(0, 10) != 0 else "",
+        }
+
+    def _at_company_business_domain_ids(self) -> List[Dict[str, int]]:
+        k = random.randint(1, 4)
+        domain_ids = random.sample(list(self.master_business_domains.keys()), k=k)
+        return [{'company_id': self._id(), 'domain_id': int(b)} for b in domain_ids]
 
     def _id(self) -> int:
         return self.itr_index
 
-    def _business_domain_ids(self) -> str:
-        return ",".join(random.sample(self.master_business_domains.keys(), k=random.randint(1, 4)))
-
-    def _company_status_id(self) -> int:
+    def _company_account_status_id(self) -> int:
         return int(random.choices(
             list(self.master_company_statuses.keys()),
             weights=list({
@@ -306,10 +325,6 @@ class DummyCompany(DummyAddress):
             }.values()),
             k=1
         )[0])
-
-
-    def _description(self) -> str:
-        return "\\n".join(f.text(random.randint(400, 1000)).splitlines()) if random.randint(0, 10) != 0 else ""
 
     def _profile_image_url(self) -> str:
         return self.dummy_profile_image_url
@@ -340,32 +355,31 @@ class DummyJobPost(DummyAddress):
     def __init__(self, n: Optional[int] = None) -> None:
         super().__init__(n)
         self.router: Dict[str, CreatorType] = {
-            'ID': self._id,
-            '会社ID': self._company_id,
-            '住所ID': self._address_id,
-            'PV': self._pv,
-            '特徴': self._tags,
-            '職種ID': self._job_type_id,
-            '仕事内容': self._job_content,
-            '身につくスキルs': self._acquireble_skills,
-            '募集テキスト': self._post_content_text,
-            '仕事イメージ画像': self._job_image_url,
-            '要件': self._requirement_text,
-            'タイトル': self._title,
-            'サブタイトル': self._subtitle,
-            '交通費支給': self._traffic_allowance,
-            '給与': self._salary,
-            '勤務日数': self._work_days,
-            '勤務時間数': self._work_hours,
-            '募集中': self._is_closed,
+            '@': self._at,
+            'id': self._id,
+            'company_id': self._company_id,
+            'address_id': self._address_id,
+            'job_type_id': self._job_type_id,
+            'acquirable_skills': self._acquirable_skills,
+            'job_content': self._job_content,
+            'job_image_url': self._job_image_url,
+            'requirement_text': self._requirement_text,
+            'title': self._title,
+            'subtitle': self._subtitle,
+            'traffic_allowance': self._traffic_allowance,
+            'salary': self._salary,
+            'work_days': self._work_days,
+            'work_hours': self._work_hours,
+            'is_closed': self._is_closed,
         }
+
         self.itr_houry_wage: Optional[int] = None
         self.itr_work_hours: Optional[int] = None
         self.itr_work_days: Optional[int] = None
         self.itr_address_id: Optional[int] = None
         self.itr_address: RowDictType = {}
         self.itr_salary: Union[Tuple[str, str, int],
-                               Tuple[str, str, int, int], None] = None
+                                Tuple[str, str, int, int], None] = None
 
         self.will__set_init: bool = False
 
@@ -384,13 +398,13 @@ class DummyJobPost(DummyAddress):
                 ["<", "=", ">"]), self.itr_houry_wage)
         elif r == 2:
             self.itr_salary = ("時給", "〜", self.itr_houry_wage, self.itr_houry_wage +
-                               random.choice([500, 1000, 1500, 2000, 2500, 3000]))
+                                random.choice([500, 1000, 1500, 2000, 2500, 3000]))
         elif r == 3:
             self.itr_salary = ("月給", random.choice(
                 ["<", "=", ">"]), self.itr_monthly_salary)
         else:
             self.itr_salary = ("月給", "〜", self.itr_monthly_salary, self.itr_monthly_salary +
-                               random.choice([5000, 10000, 15000, 20000, 25000, 30000, 35000, 40000]))
+                                random.choice([5000, 10000, 15000, 20000, 25000, 30000, 35000, 40000]))
 
         if address_row is None:
             raise TypeError(
@@ -402,52 +416,58 @@ class DummyJobPost(DummyAddress):
     def set_address(self, address_row: RowDictType) -> None:
         self.itr_address = address_row
 
+    def _at(self) -> Dict[str, Callable[..., Dict[str, str]]]:
+        return {
+            'pv': self._at_pv(),
+            'tags': self._at_tags(),
+            'post_content': self._at_post_content()
+        }
+
+    def _at_pv(self) -> Dict[str, int]:
+        return {
+            'post_id': self._id(),
+            'count': random.randint(0, 1000)
+        }
+
+    def _at_tags(self) -> List[Dict[str, int]]:
+        k = random.randint(1, 4)
+        tag_ids = random.sample(list(self.master_tags.keys()), k=k)
+        return [{'post_id': self._id(), 'tag_id': int(t)} for t in tag_ids]
+
+    def _at_post_content(self) -> Dict[str, str]:
+        contents: Dict[str, Union[str, List[str], List[Dict[str, str]]]] = {}
+        contents["gaiyo"] = f.text(random.randint(100, 1000))
+        contents["gyomu"] = "・"+"\\n・".join(f.text(random.randint(200, 400)).splitlines())
+        contents["steps"] = [f.text(random.randint(40, 100))
+                            for _ in range(random.randint(3, 5))]
+        contents["shains"] = [{"shain": self.dummy_profile_image_url, "message": f.text(
+            100)} for _ in range(random.randint(1, 3))]
+
+        return {
+            'post_content': json.dumps(contents, ensure_ascii=False)
+        }
+
     def _id(self) -> int:
         return self.itr_index
-
-    def _tags(self) -> str:
-        tags: List[str] = []
-        n: int = random.randint(1, 10)
-        for i in range(n):
-            tag: str
-            if random.randint(1, 10) <= 9:
-                tag = random.choice(self.master_tags)
-            else:
-                for _ in range(10):
-                    tag = f.word()
-                    if tag in self.master_tags:
-                        continue
-                    self.master_tags.append(tag)
-                    break
-            tags.append(tag)
-        return ",".join(tags)
 
     def _job_type_id(self) -> int:
         return int(random.choice(list(self.master_job_types.keys())))
 
     def _job_content(self) -> str:
-        return ",".join(f.words(random.randint(1, 3)))
-
-    def _acquireble_skills(self) -> str:
-        return ",".join(f.words(random.randint(1, 10)))
-
-    def _post_content_text(self) -> str:
-        contents: Dict[str, Union[str, List[str], List[Dict[str, str]]]] = {}
-        contents["gaiyo"] = f.text(random.randint(100, 1000))
-        contents["steps"] = [f.text(random.randint(40, 100))
-                             for _ in range(random.randint(3, 5))]
-        contents["shains"] = [{"shain": self.dummy_profile_image_url, "message": f.text(
-            100)} for _ in range(random.randint(1, 3))]
-        return json.dumps(contents, ensure_ascii=False)
+        # return ",".join(f.words(random.randint(1, 3)))
+        return f.word()
 
     def _company_id(self) -> int:
-        return cast(int, self.itr_address.get("会社ID", -1))
+        return cast(int, self.itr_address.get("company_id", -1))
 
     def _address_id(self) -> int:
-        return cast(int, self.itr_address.get("ID", -1))
+        return cast(int, self.itr_address.get("id", -1))
 
     def _job_image_url(self) -> str:
         return self.dummy_profile_image_url
+
+    def _acquirable_skills(self) -> str:
+        return "\\n".join(f.text(random.randint(200, 400)).splitlines())
 
     def _requirement_text(self) -> str:
         return "・"+"\\n・".join(f.text(random.randint(200, 400)).splitlines())
@@ -482,8 +502,6 @@ class DummyJobPost(DummyAddress):
     def _is_closed(self) -> int:
         return random.choices([0, 1], weights=[95, 5], k=1)[0]
 
-    def _pv(self) -> int:
-        return random.randint(0, 1000)
 
 
 class DummyJobApply(DummyTemplate):
@@ -491,7 +509,8 @@ class DummyJobApply(DummyTemplate):
     def __init__(self, n: Optional[int] = None) -> None:
         super().__init__(n)
         self.router: Dict[str, CreatorType] = {
-            'ID': self._id,
+            '@': self._at,
+            'id': self._id,
             '参加ステータスID': self._apply_status_id,
             '投稿ID': self._post_id,
             'ユーザーID': self._user_id,
