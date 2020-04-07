@@ -2,7 +2,7 @@ import csv
 import sys
 import random
 from collections import deque
-from typing import List, Dict, Deque, Any, Optional
+from typing import List, Dict, Deque, Any, Optional, cast
 from dummy_generators import (
     DummyUser,
     DummyCompany,
@@ -25,7 +25,7 @@ class Dummy(object):
         self.dummy_address_creater: 'DummyAddress' = DummyAddress()
         self.dummy_job_post_creater: 'DummyJobPost' = DummyJobPost()
         self.dummy_job_apply_creater: 'DummyJobApply' = DummyJobApply()
-        self.dummy_job_fav_creater: 'DummyFav' = DummyJobFav()
+        self.dummy_job_fav_creater: 'DummyJobFav' = DummyJobFav()
         self.address_queue: Deque[dict] = deque([])
         self.user_queue: Deque[int] = deque([])
         self.headers: Dict[str, List[str]] = {
@@ -56,7 +56,7 @@ class Dummy(object):
         self.address_queue.append(dummy_address_row)
         if self.itr_index > 500:
             self.user_queue.popleft()
-        self.user_queue.append(dummy_user_row.get('ID'))
+        self.user_queue.append(cast(int, dummy_user_row.get('ID')))
 
         if self.itr_index == 1 or dummy_address_row.get('住所タイプID') == 1:
             dummy_company_row: RowDictType = next(self.dummy_company_creater)
@@ -67,11 +67,11 @@ class Dummy(object):
             dummy_job_post_row: RowDictType = next(self.dummy_job_post_creater)
             row['job_post'] = dummy_job_post_row
 
-            self.dummy_job_apply_creater.set_init(user_id=random.choice(self.user_queue), post_id=dummy_job_post_row.get('ID'))
+            self.dummy_job_apply_creater.set_init(user_id=random.choice(self.user_queue), post_id=cast(int, dummy_job_post_row.get('ID')))
             dummy_job_apply_row: RowDictType = next(self.dummy_job_apply_creater)
             row['job_apply'] = dummy_job_apply_row
 
-            self.dummy_job_fav_creater.set_init(user_id=random.choice(self.user_queue), post_id=dummy_job_post_row.get('ID'))
+            self.dummy_job_fav_creater.set_init(user_id=random.choice(self.user_queue), post_id=cast(int, dummy_job_post_row.get('ID')))
             dummy_job_fav_row: RowDictType = next(self.dummy_job_fav_creater)
             row['job_fav'] = dummy_job_fav_row
 

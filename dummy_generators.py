@@ -58,8 +58,7 @@ class DummyTemplate(object):
         self.itr_index += 1
         if self.will__set_init:
             self._set_init()
-        dummy_row: RowDictType = dict([(key, creator())
-                                       for key, creator in self.router.items()])
+        dummy_row: RowDictType = dict([(key, creator()) for key, creator in self.router.items()])
         return dummy_row
 
     def _set_init(self) -> None:
@@ -74,27 +73,24 @@ class DummyUser(DummyTemplate):
     def __init__(self, n: Optional[int] = None) -> None:
         super().__init__(n)
         self.router: Dict[str, CreatorType] = {
-            'ID': self._id,
-            '姓': self._second_name,
-            '名': self._first_name,
-            'セイ': self._second_name2,
-            'メイ': self._first_name2,
-            'メールアドレス': self._mail,
-            '電話番号': self._tel,
-            '出身高校名': self._hight_school,
-            '大学名': self._school,
-            '学部': self._faculty,
-            '学科': self._department,
-            '学科系統ID': self._department_category_id,
-            '学年ID': self._school_grade_id,
-            '生年月日': self._birthday,
-            '性別ID': self._sex_id,
-            'プロフィール画像': self._profile_image_url,
-            '希望業界IDs': self._business_domain_ids,
-            '希望職種IDs': self._job_type_ids,
-            '自己PR': self._pr,
-            '将来': self._future,
-            'パスワード': self._password
+            '@': self._at,
+            'department_category_id': self._department_category_id,
+            'school_grade_id': self._school_grade_id,
+            'email': self._mail,
+            'phone': self._phone,
+            'high_school': self._hight_school,
+            'school': self._school,
+            'faculty': self._faculty,
+            'department': self._department,
+            'profile_image_url': self._profile_image_url,
+            'name_1': self._name_1,
+            'name_2': self._name_2,
+            'furi_1': self._furi_1,
+            'furi_2': self._furi_2,
+            'birthday': self._birthday,
+            'password': self._password,
+            'pr': self._pr,
+            'future': self._future,
         }
 
         self.itr_name: str = ""
@@ -119,25 +115,31 @@ class DummyUser(DummyTemplate):
             k=1
         )[0])
 
+    def _at(self) -> Dict[str, Callable[..., List[Dict[str, int]]]]:
+        return {
+            'user_business_domain_ids': self._business_domain_ids(),
+            'user_job_type_id': self._job_type_ids(),
+        }
+
     def _id(self) -> int:
         return self.itr_index
 
-    def _second_name(self) -> str:
+    def _name_1(self) -> str:
         return self.itr_name.split(' ')[0]
 
-    def _first_name(self) -> str:
+    def _name_2(self) -> str:
         return self.itr_name.split(' ')[1]
 
-    def _second_name2(self) -> str:
+    def _furi_1(self) -> str:
         return self.itr_name2.split(' ')[0]
 
-    def _first_name2(self) -> str:
+    def _furi_2(self) -> str:
         return self.itr_name2.split(' ')[1]
 
     def _mail(self) -> str:
         return f.email()
 
-    def _tel(self) -> str:
+    def _phone(self) -> str:
         return "060" + ''.join(map(str, random.choices(range(10), k=8)))
 
     def _hight_school(self) -> str:
@@ -159,9 +161,9 @@ class DummyUser(DummyTemplate):
     def _school_grade_id(self) -> int:
         return int(random.choice(list(self.master_school_grades[self.master_school_type[str(self.itr_school_type_id)]].keys())))
 
-    def _birthday(self) -> str:
+    def _birthday(self) -> date:
         # pattern="%Y-%m-%d %H:%M:%S"
-        return str(f.date_between(start_date=date(year=1995, month=1, day=1), end_date=date(year=2002, month=1, day=1)))
+        return f.date_between(start_date=date(year=1995, month=1, day=1), end_date=date(year=2002, month=1, day=1))
 
     def _sex_id(self) -> int:
         return int(random.choice(list(self.master_sexs.keys())))
@@ -169,11 +171,15 @@ class DummyUser(DummyTemplate):
     def _profile_image_url(self) -> str:
         return self.dummy_profile_image_url
 
-    def _business_domain_ids(self) -> str:
-        return ",".join(random.sample(list(self.master_business_domains.keys()), k=random.randint(1, 3)))
+    def _business_domain_ids(self) -> List[Dict[str, int]]:
+        k = random.randint(1, 3)
+        business_domain_ids = random.sample(list(self.master_business_domains.keys()), k=k)
+        return [{'user_id': self._id(), 'business_domain_id': int(b)} for b in business_domain_ids]
 
-    def _job_type_ids(self) -> str:
-        return ",".join(random.sample(list(self.master_job_types.values()), k=random.randint(1,3)))
+    def _job_type_ids(self) -> List[Dict[str, int]]:
+        k = random.randint(1, 3)
+        job_type_ids = random.sample(list(self.master_job_types.values()), k=k)
+        return [{'user_id': self._id(), 'job_type_id_id': int(b)} for b in job_type_ids]
 
     def _pr(self) -> str:
         return str(random.randint(0, 10000))
