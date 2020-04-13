@@ -3,7 +3,7 @@ import sys
 import random
 from collections import deque
 from typing import List, Dict, Deque, Any, Optional, cast
-from dummy_generators import (
+from .dummy_generators import (
     DummyUser,
     DummyCompany,
     DummyAddress,
@@ -11,7 +11,7 @@ from dummy_generators import (
     DummyJobApply,
     DummyJobFav
 )
-from dummy_types import (
+from .dummy_types import (
     RowDictType
 )
 
@@ -30,8 +30,8 @@ class Dummy(object):
         self.user_queue: Deque[int] = deque([])
         self.headers: Dict[str, List[str]] = {
             'user': list(self.dummy_user_creater.router.keys()),
-            'address': list(self.dummy_address_creater.router.keys()),
             'company': list(self.dummy_company_creater.router.keys()),
+            'address': list(self.dummy_address_creater.router.keys()),
             'job_post': list(self.dummy_job_post_creater.router.keys()),
             'job_apply': list(self.dummy_job_apply_creater.router.keys()),
             'job_fav': list(self.dummy_job_fav_creater.router.keys())
@@ -49,11 +49,13 @@ class Dummy(object):
 
         dummy_user_row: dict = next(self.dummy_user_creater)
         dummy_address_row: dict = next(self.dummy_address_creater)
-        row: Dict[str, RowDictType] = {'user': dummy_user_row, 'address': dummy_address_row}
+
+        row: Dict[str, RowDictType] = {'user': dummy_user_row}
 
         if self.itr_index > 500:
             self.address_queue.popleft()
         self.address_queue.append(dummy_address_row)
+
         if self.itr_index > 500:
             self.user_queue.popleft()
         self.user_queue.append(cast(int, dummy_user_row.get('id')))
@@ -61,6 +63,8 @@ class Dummy(object):
         if self.itr_index == 1 or dummy_address_row.get('address_type_id') == 1:
             dummy_company_row: RowDictType = next(self.dummy_company_creater)
             row['company'] = dummy_company_row
+
+        row['address'] = dummy_address_row
 
         if random.randint(1, 10) <= 7:
             self.dummy_job_post_creater.set_init(random.choice(self.address_queue))
@@ -89,8 +93,8 @@ class Dummy(object):
     def get_indexs(self) -> Dict[str, int]:
         return {
             'user': self.dummy_user_creater._id(),
-            'address': self.dummy_address_creater._id(),
             'company': self.dummy_company_creater._id(),
+            'address': self.dummy_address_creater._id(),
             'job_post': self.dummy_job_post_creater._id(),
             'job_apply': self.dummy_job_apply_creater._id(),
             'job_fav': self.dummy_job_fav_creater._id()
@@ -100,8 +104,8 @@ if __name__ == '__main__':
     def main(n: int) -> None:
         with \
             open('example_csv/dummy_user.csv', 'w', encoding='utf-8') as u_fp, \
-            open('example_csv/dummy_address.csv', 'w', encoding='utf-8') as a_fp, \
             open('example_csv/dummy_company.csv', 'w', encoding='utf-8') as c_fp, \
+            open('example_csv/dummy_address.csv', 'w', encoding='utf-8') as a_fp, \
             open('example_csv/dummy_job_post.csv', 'w', encoding='utf-8') as jp_fp, \
             open('example_csv/dummy_job_apply.csv', 'w', encoding='utf-8') as ja_fp, \
             open('example_csv/dummy_job_fav.csv', 'w', encoding='utf-8') as jf_fp:
@@ -115,8 +119,8 @@ if __name__ == '__main__':
 
             dummy_creater: Dummy = Dummy(n)
             u_writer.writerow(dummy_creater.get_header('user'))
-            a_writer.writerow(dummy_creater.get_header('address'))
             c_writer.writerow(dummy_creater.get_header('company'))
+            a_writer.writerow(dummy_creater.get_header('address'))
             jp_writer.writerow(dummy_creater.get_header('job_post'))
             ja_writer.writerow(dummy_creater.get_header('job_apply'))
             jf_writer.writerow(dummy_creater.get_header('job_fav'))
@@ -127,10 +131,10 @@ if __name__ == '__main__':
                 for key, value in dummy_rows.items():
                     if key == 'user':
                         u_writer.writerow(list(value.values()))
-                    elif key == 'address':
-                        a_writer.writerow(list(value.values()))
                     elif key == 'company':
                         c_writer.writerow(list(value.values()))
+                    elif key == 'address':
+                        a_writer.writerow(list(value.values()))
                     elif key == 'job_post':
                         jp_writer.writerow(list(value.values()))
                     elif key == 'job_apply':

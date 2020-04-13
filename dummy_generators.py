@@ -1,16 +1,17 @@
 import json
 import random
+import string
 from typing import List, Dict, Tuple, Callable, Any, Union, Optional, TypeVar, cast, overload
 from mypy_extensions import TypedDict
 from faker import Factory  # type: ignore
 from datetime import date
 from pykakasi import kakasi  # type: ignore
-from dummy_types import (
+from .dummy_types import (
     CreatorType,
     RowDictType,
     RowType
 )
-from dummy_masters import Master as M
+from .dummy_masters import Master as M
 
 f = Factory.create('ja_JP')
 kakasi = kakasi()
@@ -52,6 +53,9 @@ class DummyTemplate(object):
     def __iter__(self):
         return self
 
+    def _set_init(self):
+        pass
+
     def __next__(self) -> RowDictType:
         if self.itr_index == self.n:
             raise StopIteration()
@@ -73,6 +77,7 @@ class DummyUser(DummyTemplate):
         self.router: Dict[str, CreatorType] = {
             '@': self._at,
             'id': self._id,
+            'sex': self._sex_id,
             'department_category_id': self._department_category_id,
             'school_grade_id': self._school_grade_id,
             'email': self._mail,
@@ -94,6 +99,8 @@ class DummyUser(DummyTemplate):
         self.itr_name: str = ""
         self.itr_name2: str = ""
         self.itr_school_type_id: int = -1
+        self._phones_set: set = set()
+        self._mails_set: set = set()
 
 
     def _set_init(self) -> None:
@@ -112,7 +119,7 @@ class DummyUser(DummyTemplate):
             k=1
         )[0])
 
-    def _at(self) -> Dict[str, List[Dict[str, int]]]:
+    def _at(self) -> Dict[str, Union[Dict[str, Union[int, str]], List[Dict[str, int]]]]:
         return {
             'password': self._at_password(),
             'user_business_domain_ids': self._at_business_domain_ids(),
@@ -148,10 +155,36 @@ class DummyUser(DummyTemplate):
         return self.itr_name2.split(' ')[1]
 
     def _mail(self) -> str:
-        return f.email()
+        c = 0
+        maximum = 3
+        while True:
+            randlst = [random.choice(string.ascii_letters + string.digits) for i in range(random.randint(maximum-3, maximum))]
+            m = ''.join(randlst)+f.email()
+            if m in self._mails_set:
+                c += 1
+                if c >= 10:
+                    maximum += 1
+                    c = 0
+                continue
+
+            self._mails_set.add(m)
+            return m
 
     def _phone(self) -> str:
-        return "060" + ''.join(map(str, random.choices(range(10), k=8)))
+        c = 0
+        pre = "0"
+        while True:
+            p = pre+str(random.randint(10, 69))+''.join(map(str, random.choices(range(10), k=8)))
+            if p in self._phones_set:
+                c += 1
+                if c >= 10:
+                    pre = int(pre)
+                    pre += 1
+                    c = 0
+                continue
+
+            self._phones_set.add(p)
+            return p
 
     def _hight_school(self) -> str:
         return f.town()+"高校"
@@ -187,8 +220,7 @@ class DummyUser(DummyTemplate):
         return str(random.randint(0, 10000))
 
     def _future(self) -> str:
-        return "\\n".join(f.text(random.randint(5, 400)).splitlines()) if random.randint(0, 10) != 0 else ""
-
+        return ("\\n".join(f.text(random.randint(5, 400)).splitlines()))[:400] if random.randint(0, 10) != 0 else None
 
 
 class DummyAddress(DummyTemplate):
@@ -238,7 +270,7 @@ class DummyAddress(DummyTemplate):
         return {
             'area_type': "city",
             'area': ','.join(self.itr_address_list[:2]),
-            'description': ""
+            'description': None
         }
 
     def _id(self) -> int:
@@ -302,7 +334,7 @@ class DummyCompany(DummyAddress):
 
     def _at_description(self) -> Dict[str, str]:
         return {
-            'description': "\\n".join(f.text(random.randint(400, 1000)).splitlines()) if random.randint(0, 10) != 0 else "",
+            'description': ("\\n".join(f.text(random.randint(400, 1000)).splitlines()))[:1000] if random.randint(0, 10) != 0 else None,
         }
 
     def _at_company_business_domain_ids(self) -> List[Dict[str, int]]:
@@ -435,7 +467,7 @@ class DummyJobPost(DummyAddress):
     def _at_post_content(self) -> Dict[str, str]:
         contents: Dict[str, Union[str, List[str], List[Dict[str, str]]]] = {}
         contents["gaiyo"] = f.text(random.randint(100, 1000))
-        contents["gyomu"] = "・"+"\\n・".join(f.text(random.randint(200, 400)).splitlines())
+        contents["gyomu"] = ("・"+"\\n・".join(f.text(random.randint(200, 400)).splitlines()))[:400]
         contents["steps"] = [f.text(random.randint(40, 100))
                             for _ in range(random.randint(3, 5))]
         contents["shains"] = [{"shain": self.dummy_profile_image_url, "message": f.text(
@@ -465,16 +497,16 @@ class DummyJobPost(DummyAddress):
         return self.dummy_profile_image_url
 
     def _acquirable_skills(self) -> str:
-        return "\\n".join(f.text(random.randint(200, 400)).splitlines())
+        return ("\\n".join(f.text(random.randint(200, 400)).splitlines()))[:400]
 
     def _requirement_text(self) -> str:
-        return "・"+"\\n・".join(f.text(random.randint(200, 400)).splitlines())
+        return ("・"+"\\n・".join(f.text(random.randint(200, 400)).splitlines()))[:400]
 
     def _title(self) -> str:
-        return "\\n".join(f.text(random.randint(50, 100)).splitlines())
+        return ("\\n".join(f.text(random.randint(50, 100)).splitlines()))[:100]
 
     def _subtitle(self) -> str:
-        return "\\n".join(f.text(random.randint(50, 100)).splitlines())
+        return ("\\n".join(f.text(random.randint(50, 100)).splitlines()))[:100]
 
     def _traffic_allowance(self) -> str:
         return random.choice(self.master_traffic_allowances)
@@ -558,10 +590,10 @@ class DummyJobApply(DummyTemplate):
         return random.randint(1, 5)
 
     def _motivation(self) -> str:
-        return "\\n".join(f.text(random.randint(100, 400)).splitlines())
+        return ("\\n".join(f.text(random.randint(100, 400)).splitlines()))[:400]
 
     def _remark(self) -> str:
-        return "\\n".join(f.text(random.randint(100, 400)).splitlines())
+        return ("\\n".join(f.text(random.randint(100, 400)).splitlines()))[:400]
 
 
 class DummyJobFav(DummyTemplate):
