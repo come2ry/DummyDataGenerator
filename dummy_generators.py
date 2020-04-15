@@ -230,8 +230,8 @@ class DummyAddress(DummyTemplate):
         self.router: Dict[str, CreatorType] = {
             '@': self._at,
             'id': self._id,
-            'company_id': self._company_id,
             'address_type_id': self._address_type_id,
+            'company_id': self._company_id,
             'area_id': self._area_type,
             'title': self._address_title,
             'access': self._access,
@@ -258,7 +258,7 @@ class DummyAddress(DummyTemplate):
             k=1
         )[0])
 
-        if self.itr_address_type_id == 0:
+        if self.itr_index != 1 and self.itr_address_type_id == 1:
             self.company_num += 1
 
     def _at(self) ->  Dict[str, RowType]:
@@ -472,6 +472,8 @@ class DummyJobPost(DummyAddress):
                             for _ in range(random.randint(3, 5))]
         contents["shains"] = [{"shain": self.dummy_profile_image_url, "message": f.text(
             100)} for _ in range(random.randint(1, 3))]
+        contents["flows"] = [f.text(random.randint(40, 100))
+                            for _ in range(random.randint(3, 5))]
 
         return {
             'post_content': json.dumps(contents, ensure_ascii=False)
