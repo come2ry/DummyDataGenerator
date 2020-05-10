@@ -217,7 +217,7 @@ class DummyUser(DummyTemplate):
         return self.dummy_profile_image_url
 
     def _pr(self) -> str:
-        return str(random.randint(0, 10000))
+        return ("\\n".join(f.text(random.randint(5, 400)).splitlines()))[:400] if random.randint(0, 10) != 0 else None
 
     def _future(self) -> str:
         return ("\\n".join(f.text(random.randint(5, 400)).splitlines()))[:400] if random.randint(0, 10) != 0 else None
