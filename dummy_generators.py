@@ -94,6 +94,7 @@ class DummyUser(DummyTemplate):
             'birthday': self._birthday,
             'pr': self._pr,
             'future': self._future,
+            'is_active': self._is_active,
         }
 
         self.itr_name: str = ""
@@ -221,6 +222,9 @@ class DummyUser(DummyTemplate):
 
     def _future(self) -> str:
         return ("\\n".join(f.text(random.randint(5, 400)).splitlines()))[:400] if random.randint(0, 10) != 0 else None
+
+    def _is_active(self) -> int:
+        return random.choices([0, 1], weights=[5, 95], k=1)[0]
 
 
 class DummyAddress(DummyTemplate):
