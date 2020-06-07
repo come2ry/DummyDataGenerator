@@ -395,8 +395,8 @@ class DummyJobPost(DummyAddress):
             'address_id': self._address_id,
             'job_type_id': self._job_type_id,
             'acquirable_skills': self._acquirable_skills,
-            'job_content': self._job_content,
-            'job_image_url': self._job_image_url,
+            'job_content': self._job_content, #
+            'job_image_url': self._job_image_url, #
             'requirement_text': self._requirement_text,
             'title': self._title,
             'subtitle': self._subtitle,
