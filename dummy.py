@@ -71,6 +71,18 @@ class Dummy(object):
             dummy_job_post_row: RowDictType = next(self.dummy_job_post_creater)
             row['job_post'] = dummy_job_post_row
 
+            full_text = dummy_company_row.get('company_name', "")
+            full_text += dummy_address_row.get('access', "")
+            full_text += dummy_job_post_row.get('title', "")
+            full_text += dummy_job_post_row.get('subtitle', "")
+            full_text += dummy_job_post_row.get('job_content', "")
+            full_text += dummy_job_post_row['@'].get('post_content', "")
+
+            row['free_word_search_post_table'] = {
+                "post_id": dummy_job_post_row.get('id', 1),
+                "searched_text": full_text
+            }
+
             self.dummy_job_apply_creater.set_init(user_id=random.choice(self.user_queue), post_id=cast(int, dummy_job_post_row.get('id')))
             dummy_job_apply_row: RowDictType = next(self.dummy_job_apply_creater)
             row['job_apply'] = dummy_job_apply_row

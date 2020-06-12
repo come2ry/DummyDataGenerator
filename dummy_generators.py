@@ -42,7 +42,8 @@ class DummyTemplate(object):
         self.master_apply_statuses: Dict[str, str] = M.get("APPLY_STATUSES")
         self.master_tags: Dict[str, str] = M.get("TAGS")
 
-        self.dummy_profile_image_url: str = M.get("PROFILE_IMAGE_URL")
+        # self.dummy_profile_image_url: str = M.get("PROFILE_IMAGE_URL")
+        self.dummy_profile_image_url: str = "https://storage.googleapis.com/jobpacker.appspot.com/%E3%81%A8%E3%82%82%E3%81%82%E3%81%8D.png"
         self.dummy_company_url: str = M.get("COMPANY_URL")
 
         # 動的Matser
@@ -470,14 +471,36 @@ class DummyJobPost(DummyAddress):
 
     def _at_post_content(self) -> Dict[str, str]:
         contents: Dict[str, Union[str, List[str], List[Dict[str, str]]]] = {}
-        contents["gaiyo"] = f.text(random.randint(100, 1000))
-        contents["gyomu"] = ("・"+"\\n・".join(f.text(random.randint(200, 400)).splitlines()))[:400]
-        contents["steps"] = [f.text(random.randint(40, 100))
-                            for _ in range(random.randint(3, 5))]
-        contents["shains"] = [{"shain": self.dummy_profile_image_url, "message": f.text(
-            100)} for _ in range(random.randint(1, 3))]
-        contents["flows"] = [f.text(random.randint(40, 100))
-                            for _ in range(random.randint(3, 5))]
+        # contents["gaiyo"] = f.text(random.randint(100, 1000))
+        contents["gaiyo"] = """自社メディアの立ち上げから運営までをお任せします。
+具体的には、メディアのコンセプト概要を社長に伝え
+てもらい、それに沿った記事を自分で作成するライテ
+ィングから、PV数を上げるための施策を考えるマーケ
+ティングなど業務は多岐に渡ります。限定された仕事
+ではなく、様々なことに好奇心のある学生さんにオス
+スメです！"""
+        contents["gyomu"] = """マーケティングについての基礎を学びます。\\n学んだことを元に、社長と相談しながら記事を作成し、投稿します。\\nPV数等の各種KPIに基づいてコンテンツを分析し、改善します。\\n成果が上がれば、部下を持って組織マネジメントも行います。"""
+        # contents["gyomu"] = ("・"+"\\n・".join(f.text(random.randint(200, 400)).splitlines()))[:400]
+        contents["steps"] = [
+            "マーケティングについての基礎を学びます。",
+            "学んだことを元に、社長と相談しながら記事を作成し、投稿します。",
+            "PV数等の各種KPIに基づいてコンテンツを分析し、改善します。",
+            "成果が上がれば、部下を持って組織マネジメントも行います。"
+        ]
+        # contents["steps"] = [f.text(random.randint(40, 100))
+        #                     for _ in range(random.randint(3, 5))]
+        contents["shains"] = [{
+            "shain": "https://storage.googleapis.com/jobpacker.appspot.com/%E3%81%A8%E3%82%82%E3%81%82%E3%81%8D.png",
+            "message": """事業を１から立ち上げる経験は大変ではあり
+ますが、かなり貴重なものだと思います。
+学生の間に成長したいと考えているあなたの
+応募をお待ちしています！"""
+        }]
+        # contents["shains"] = [{"shain": self.dummy_profile_image_url, "message": f.text(
+        #     100)} for _ in range(random.randint(1, 3))]
+        contents["flows"] = ["Web面談ツールを用いて、面接を行います。", "合格となれば、インターン開始です！"]
+        # contents["flows"] = [f.text(random.randint(40, 100))
+        #                     for _ in range(random.randint(3, 5))]
 
         return {
             'post_content': json.dumps(contents, ensure_ascii=False)
@@ -500,7 +523,7 @@ class DummyJobPost(DummyAddress):
         return cast(int, self.itr_address.get("id", -1))
 
     def _job_image_url(self) -> str:
-        return self.dummy_profile_image_url
+        return "https://storage.googleapis.com/jobpacker.appspot.com/%E9%9B%86%E5%90%88.png"
 
     def _acquirable_skills(self) -> str:
         return ("\\n".join(f.text(random.randint(200, 400)).splitlines()))[:400]
@@ -509,7 +532,8 @@ class DummyJobPost(DummyAddress):
         return ("・"+"\\n・".join(f.text(random.randint(200, 400)).splitlines()))[:400]
 
     def _title(self) -> str:
-        return ("\\n".join(f.text(random.randint(50, 100)).splitlines()))[:100]
+        return """【圧倒的成長】社長直下で学ぶ、Webマーケティングのプロを目指すメディア運営インターン"""
+        # return ("\\n".join(f.text(random.randint(50, 100)).splitlines()))[:100]
 
     def _subtitle(self) -> str:
         return ("\\n".join(f.text(random.randint(50, 100)).splitlines()))[:100]
